@@ -1,16 +1,33 @@
+"""
+Idea: Create repetition matrix for notes, then play the analyzed file and highlight the X/Y of the current note.
+"""
+
 import os
 import sys
 import argparse
 from signal import signal, SIGINT, SIG_IGN
 
 
+def extract_notes(score):
+    notes = []
+    for a in score.recurse().notes:
+        if a.isNote:
+            x = a
+            notes.append(str(x.pitch))
+        if a.isChord:
+            for x in a._notes:
+                notes.append(str(x.pitch))
+
+    return notes
+
+
 def main(args):
     with tqdm(total=4) as bar:
         tqdm.write("Downloading Lyrics")
-        lyrics = lyricwikia.get_lyrics(args.artist, args.track)
+        song = m.converter.parse("melody.mid")
 
-        words = lyrics.split()
-        tqdm.write("  Got {} words".format(len(words)))
+        words = extract_notes(song)
+        tqdm.write("  Got {} notes".format(len(words)))
         words.insert(0, "")  # insert dummy value at 0, 0 so all actual words are part of the matrix
         bar.update(1)
 
@@ -61,10 +78,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--artist", type=str, dest="artist", required=True,
-                        metavar="string", help="(required) The artist to search for")
-    parser.add_argument("-t", "--track", type=str, dest="track", required=True,
-                        metavar="string", help="(required) The song title to search for")
+    parser.add_argument("-i", "--input", type=str, dest="input_file", required=True,
+                        metavar="file", help="(required) The MIDI file to analyze")
     parser.add_argument("-m", "--mask", action="store_true", dest="mask",
                         help="If given, masks out the top half of the rendered output")
     args = parser.parse_args()
@@ -78,8 +93,8 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    ### Lyric Downloader ###
-    import lyricwikia
+    ### Music21 ###
+    import music21 as m
 
     ### tqdm ###
     from tqdm import tqdm
